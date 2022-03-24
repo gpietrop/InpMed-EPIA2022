@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from normalization import Normalization
 
-path = os.getcwd() + '/tensor/model2015/'
+path = os.getcwd() + '/tensor/(12, 12, 20)/model2015/'
 tensor_ = os.listdir(path)
 
 dataset = []
@@ -22,7 +22,6 @@ for el in range(len(tensor_)):
     tensor = torch.load(path + tensor_name)
     tensor = (tensor - mean_tensor) / std_tensor
     tensor = tensor[:, :, :-1, :, 1:-1]
-    # tensor = tensor.float()
     torch.save(tensor, path_norm + tensor_name)
 
     # print normalized tensor
@@ -30,7 +29,7 @@ for el in range(len(tensor_)):
 
     number_fig = len(tensor[0, 0, :, 0, 0])  # number of levels of depth
 
-    for channel in [0, 1, 2, 3]:
+    for channel in [0, 1, 2, 3, 4]:
         for i in range(number_fig):
             path_fig_channel = path_fig + '/' + str(channel)
             if not os.path.exists(path_fig_channel):

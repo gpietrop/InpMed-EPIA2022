@@ -50,9 +50,9 @@ alpha = torch.tensor(4e-4)
 lr_c = 0.01
 lr_d = 0.01
 
-epoch_c = 500  # number of step for the first phase of training
-epoch_d = 500  # number of step for the second phase of training
-epoch_adv = 1000  # number of step for the third phase of training
+epoch_c = 2000  # number of step for the first phase of training
+epoch_d = 2000  # number of step for the second phase of training
+epoch_adv = 5000  # number of step for the third phase of training
 snaperiod = 25
 
 hole_min_d, hole_max_d = 10, 20
@@ -73,6 +73,9 @@ if not os.path.exists(path_configuration):
 path_lr = path_configuration + "/" + str(lr_c) + "lrc_" + str(lr_d) + "lrd"
 if not os.path.exists(path_lr):
     os.mkdir(path_lr)
+path_model = path_lr + "/model/"
+if not os.path.exists(path_model):
+    os.mkdir(path_model)
 
 losses_1_c, losses_2_d, losses_3_c, losses_3_d = [], [], [], []
 losses_1_c_test, losses_3_c_test = [], []
@@ -172,8 +175,8 @@ for ep in range(epoch_c):
                         plt.close()
 
     if ep % snaperiod == 0:  # save the partial model
-        torch.save(model_completion.state_dict(), "model/model2015/step1_ep_" + str(ep) + ".pt")
-        torch.save(model_completion.state_dict(), path_lr + "/step1_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), "model/model2015/model_step1_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), path_model + "/model_step1_ep_" + str(ep) + ".pt")
 
 f.close()
 f_test.close()
@@ -333,7 +336,7 @@ for ep in range(epoch_adv):
 
             number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
 
-            for channel in [0, 1, 2, 3]:
+            for channel in [0, 1, 2, 3, 4]:
                 for i in range(number_fig):
                     path_fig_channel = path_fig_epoch + "/" + str(channel)
                     if not os.path.exists(path_fig_channel):
@@ -346,7 +349,7 @@ for ep in range(epoch_adv):
 
     if ep % snaperiod == 0:  # save the partial model
         torch.save(model_completion.state_dict(), "model/model2015/phase3_ep_" + str(ep) + ".pt")
-        torch.save(model_completion.state_dict(), path_lr + "/phase3_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), path_model + "/phase3_ep_" + str(ep) + ".pt")
 
 f.close()
 

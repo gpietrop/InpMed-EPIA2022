@@ -12,14 +12,14 @@ from utils import generate_input_mask
 from normalization import Normalization
 from mean_pixel_value import MV_pixel
 from make_datasets import find_index
-from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
+from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution, number_channel
 
 sns.set(context='notebook', style='whitegrid')
 
 epoch_float, lr_float = 25, 0.0001
 
-name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
-# name_model = "model_completion_epoch_1000_1000_350_lrc_0.01_lrd_0.01"
+name_model = "model_step1_ep_1975"
+
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
@@ -58,7 +58,7 @@ for variable in list(dict_channel.keys()):
     mvp_dataset = get_list_model_tensor()
     mvp_dataset, mean_model, std_model = Normalization(mvp_dataset)
     mean_value_pixel = MV_pixel(mvp_dataset)  # compute the mean of the channel of the training set
-    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
+    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, number_channel, 1, 1, 1))
 
     model = CompletionN()
     model.load_state_dict(torch.load(path_model))  # network trained only with model information
@@ -170,65 +170,144 @@ for variable in list(dict_channel.keys()):
             else:
                 continue
 
+        mk_size = 3
+        ls = '-'
+        lw = 0.75
+        color_phys, mk_phys = "slategray", "v"
+        color_model, mk_model = "forestgreen", "o"
+        color_float, mk_float = "blueviolet", "*"
+
         # MEAN
-        plt.plot(means_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
-        plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+        depth_val = range(0, 600, 20)[1:]
+        plt.plot(means_phys[::-1],
+                 depth_val[::-1],
+                 color=color_model,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_phys,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.plot(means_mod[::-1],
+                 depth_val[::-1],
+                 color=color_model,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_model,
+                 markersize=mk_size,
+                 alpha=0.8)
         if flag_float:
-            plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
-            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+            plt.plot(means_flo[::-1],
+                     depth_val[::-1],
+                     color=color_float,
+                     linestyle=ls,
+                     linewidth=lw,
+                     marker=mk_float,
+                     markersize=mk_size,
+                     alpha=0.8)
+            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["physical model", "CNN"])
-        plt.ylabel(variable)
-        plt.xlabel("depth")
-        plt.suptitle("Week " + str(month))
-        plt.title("Profile of the mean of " + variable)
+            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+
+        plt.gca().invert_yaxis()
+        if variable == "temperature":
+            unit = " (degrees °C)"
+        plt.xlabel(variable + unit)
+        plt.ylabel("depth (meters)")
         plt.savefig(path_fig + '/mean/' + variable + '_pro_mean_' + month + '.png')
         plt.close()
 
         # STD
-        plt.plot(std_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
-        plt.plot(std_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+        plt.plot(std_phys[::-1],
+                 depth_val[::-1],
+                 color=color_phys,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_phys,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.plot(std_mod[::-1],
+                 depth_val[::-1],
+                 color=color_model,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_model,
+                 markersize=mk_size,
+                 alpha=0.8)
         if flag_float:
-            plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
-            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+            plt.plot(std_flo[::-1],
+                     depth_val[::-1],
+                     color=color_float,
+                     linestyle=ls,
+                     linewidth=lw,
+                     marker=mk_float,
+                     markersize=mk_size,
+                     alpha=0.8)
+            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["physical model", "CNN"])
-        plt.ylabel(variable)
-        plt.xlabel("depth")
-        plt.suptitle("Week " + str(month))
-        plt.title("Profile of the std of " + variable)
+            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+
+        plt.gca().invert_yaxis()
+        if variable == "temperature":
+            unit = " (degrees °C)"
+        plt.xlabel(variable + unit)
+        plt.ylabel("depth (meters)")
         plt.savefig(path_fig + '/std/' + variable + '_pro_std_' + month + '.png')
         plt.close()
 
         # MEAN + STD
-        plt.plot(means_phys, color="slategray", linestyle='--', marker='h', alpha=0.8)
-        plt.fill_between(range(len(means_phys)),
-                         np.array(means_phys) - np.array(std_phys) / 2,
-                         np.array(means_phys) + np.array(std_phys) / 2,
-                         color="slategray",
-                         alpha=0.2
-                         )
-        plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
-        plt.fill_between(range(len(means_mod)),
-                         np.array(means_mod) - np.array(std_mod) / 2,
-                         np.array(means_mod) + np.array(std_mod) / 2,
-                         color="deeppink",
-                         alpha=0.2
-                         )
+        plt.plot(means_phys[::-1],
+                 depth_val[::-1],
+                 color=color_phys,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_phys,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.fill_betweenx(depth_val[::-1],
+                          (np.array(means_phys) - np.array(std_phys) / 2)[::-1],
+                          (np.array(means_phys) + np.array(std_phys) / 2)[::-1],
+                          color=color_phys,
+                          alpha=0.2
+                          )
+
+        plt.plot(means_mod[::-1],
+                 depth_val[::-1],
+                 color=color_model,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_model,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.fill_betweenx(depth_val[::-1],
+                          (np.array(means_mod) - np.array(std_mod) / 2)[::-1],
+                          (np.array(means_mod) + np.array(std_mod) / 2)[::-1],
+                          color=color_model,
+                          alpha=0.2
+                          )
+
         if flag_float:
-            plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
-            plt.fill_between(range(len(means_flo)),
-                             np.array(means_flo) - np.array(std_flo) / 2,
-                             np.array(means_flo) + np.array(std_flo) / 2,
-                             color="purple",
-                             alpha=0.2
-                             )
-            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+            plt.plot(means_flo[::-1],
+                     depth_val[::-1],
+                     color=color_float,
+                     linestyle=ls,
+                     linewidth=lw,
+                     marker=mk_float,
+                     markersize=mk_size,
+                     alpha=0.8)
+            plt.fill_betweenx(depth_val[::-1],
+                              (np.array(means_flo) - np.array(std_flo) / 2)[::-1],
+                              (np.array(means_flo) + np.array(std_flo) / 2)[::-1],
+                              color=color_float,
+                              alpha=0.2
+                              )
+            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["physical model", "CNN"])
-        plt.ylabel(variable)
-        plt.xlabel("depth")
-        plt.suptitle("Week " + str(month))
-        plt.title("Profile of the std of " + variable)
-        plt.savefig(path_fig + '/mean+std/' + variable + '_pro_std_' + month + '.png')
+            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+
+        plt.gca().invert_yaxis()
+        if variable == "temperature":
+            unit = " (degrees °C)"
+        plt.xlabel(variable + unit)
+        plt.ylabel("depth (meters)")
+        plt.savefig(path_fig + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
         plt.close()
