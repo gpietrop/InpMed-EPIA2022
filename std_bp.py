@@ -13,26 +13,28 @@ from utils import generate_input_mask
 from normalization import Normalization
 from mean_pixel_value import MV_pixel
 from make_datasets import find_index
-from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution,number_channel
+from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution, number_channel
 
-sns.set(context='notebook', style='whitegrid')
+sns.set(context="notebook", style="whitegrid")
 
 epoch_float, lr_float = 25, 0.0001
 
 name_model = "model_step1_ep_1975"
 
-model_considered = 'model2015/' + name_model
-path_model = os.getcwd() + '/model/' + model_considered + '.pt'
-path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
+paper_path = os.getcwd() + "/paper_fig"
+model_considered = "model2015/" + name_model
+path_model = os.getcwd() + "/model/" + model_considered + ".pt"
+path_model_float = os.getcwd() + "/result2/" + name_model + "/" + str(epoch_float) + "/" + str(lr_float) + "/model.pt"
 
 if not os.path.exists(path_model_float):
     flag_float = False
 else:
     flag_float = True
 
-dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
+dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 4}
+dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
 
-for variable in ["temperature"]:  # list(dict_channel.keys()):
+for variable in dict_channel:  # list(dict_channel.keys()):
     snaperiod = 25
     print("plotting " + variable + " vertical profile")
 
@@ -70,20 +72,20 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
         model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
         model_float.eval()
 
-    path_fig = os.getcwd() + '/analysis_result/profile/'
+    path_fig = os.getcwd() + "/analysis_result/profile/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = os.getcwd() + '/analysis_result/profile/' + name_model[23:] + '/'
+    path_fig = os.getcwd() + "/analysis_result/profile/" + name_model[23:] + "/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
     if flag_float:
-        path_fig = path_fig + str(epoch_float) + '_' + str(lr_float) + '/'
+        path_fig = path_fig + str(epoch_float) + "_" + str(lr_float) + "/"
         if not os.path.exists(path_fig):
             os.mkdir(path_fig)
     path_fig = path_fig + variable
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = path_fig + '/std_boxplot/'
+    path_fig = path_fig + "/std_boxplot/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
 
@@ -92,16 +94,16 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
     stds_mod = [[] for _ in range(0, d)]
     stds_float = [[] for _ in range(0, d)]
 
-    for month in months[0:3]:  # iteration among months
+    for month in months[2:4]:  # iteration among months
         if month[-1] == "0":
             month = month[:-1]
         datetime = "2015." + month
-        data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(
-            datetime) + '.pt'  # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (
+        data_tensor = os.getcwd() + "/tensor/model2015_n/datetime_" + str(
+            datetime) + ".pt"  # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (
         # NORMALIZED!!)
         data_tensor = torch.load(data_tensor)
 
-        # TEST ON THE MODEL'S MODEL AND THE FLOAT MODEL WITH SAME HOLE
+        # TEST ON THE MODEL"S MODEL AND THE FLOAT MODEL WITH SAME HOLE
         with torch.no_grad():
             training_mask = generate_input_mask(
                 shape=(data_tensor.shape[0], 1, data_tensor.shape[2], data_tensor.shape[3], data_tensor.shape[4]),
@@ -144,7 +146,7 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
             if flag_float:
                 std_flo.append(torch.std(unkn_float))
 
-            if torch.mean(unkn_phys) > 5:
+            if torch.mean(unkn_phys) > dict_threshold[variable]:
                 stds_phys[depth_index].append(float(torch.std(unkn_phys)))
                 stds_mod[depth_index].append(float(torch.std(unkn_model)))
 
@@ -161,43 +163,42 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
     sns.set_theme(style="whitegrid")
 
     for index_week in range(np.shape(stds_phys)[1]):
-        fig, ax1 = plt.subplots(figsize=(7, 6))
+        fig, ax1 = plt.subplots()
         mdf = [stds_phys[:, index_week], stds_mod[:, index_week]]
 
         colours = ["w", "w"]
         sns.set_palette(sns.color_palette(colours))
 
-        flierprops = dict(markerfacecolor='black', markersize=3, markeredgecolor='black')
+        flierprops = dict(markerfacecolor="black", markersize=3, markeredgecolor="black")
 
         bplot = sns.boxplot(data=mdf,
                             orient="h",
                             flierprops=flierprops,
                             linewidth=2,
+                            # showfliers=False
                             )
 
         for i, box in enumerate(bplot.artists):
-            box.set_edgecolor('black')
-            box.set_facecolor('white')
+            box.set_edgecolor("black")
+            box.set_facecolor("white")
 
-            # iterate over whiskers and median lines
+        # iterate over whiskers and median lines
             for j in range(6 * i, 6 * (i + 1)):
-                bplot.lines[j].set_color('black')
+                bplot.lines[j].set_color("black")
 
         for line in ax1.get_lines()[4::12]:
-            line.set_color('darkorange')
+            line.set_color("darkorange")
         for line in ax1.get_lines()[10::12]:
-            line.set_color('red')
+            line.set_color("red")
 
-#        for patch in bplot.artists:
-#            r, g, b, a = patch.get_facecolor()
-#            patch.set_facecolor((r, g, b, .3))
-
-        # plt.legend(title='Model', loc='upper left', labels=['MedBFM', 'Emulator'])
+        # plt.legend(title="Model", loc="upper left", labels=["MedBFM", "Emulator"])
 
         bplot.set_xlabel("")
         bplot.set_ylabel("week " + str(index_week + 1))
         plt.legend([], [], frameon=False)
 
         bplot.set_yticklabels([])
-        plt.savefig(path_fig + '/' + str(index_week) + '-bp.png')
+        plt.savefig(path_fig + "/" + variable + "_" + str(index_week + 1) + "_std_bp.png")
+        if index_week in [0, 9, 19, 29, 39]:
+            plt.savefig(paper_path + "/std_bp/" + variable + "_" + str(index_week + 1) + "_std_bp.png")
         plt.close()

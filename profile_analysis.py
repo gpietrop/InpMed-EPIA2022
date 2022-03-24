@@ -29,7 +29,8 @@ if not os.path.exists(path_model_float):
 else:
     flag_float = True
 
-dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
+dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
+dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": 0}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -146,12 +147,7 @@ for variable in list(dict_channel.keys()):
 
         if flag_float:
             zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
-            if variable == "oxygen":
-                zip_result = [x for x in zip_result if x[4] > 50]
-            if variable == "salinity":
-                zip_result = [x for x in zip_result if x[4] > 10]
-            if variable == "temperature":
-                zip_result = [x for x in zip_result if x[4] > 8 and x[0] > 8]
+            zip_result = [x for x in zip_result if x[4] > dict_threshold[variable]]
             if zip_result:
                 means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*zip_result)
             else:
@@ -160,11 +156,7 @@ for variable in list(dict_channel.keys()):
         else:
             zip_result = zip(means_mod, std_mod, means_phys, std_phys)
             if variable == "oxygen":
-                zip_result = [x for x in zip_result if x[2] > 50]
-            if variable == "salinity":
-                zip_result = [x for x in zip_result if x[2] > 10]
-            if variable == "temperature":
-                zip_result = [x for x in zip_result if x[2] > 8 or x[0] > 8]
+                zip_result = [x for x in zip_result if x[2] > dict_threshold[variable]]
             if zip_result:
                 means_mod, std_mod, means_phys, std_phys = zip(*zip_result)
             else:
