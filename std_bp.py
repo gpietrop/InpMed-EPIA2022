@@ -92,7 +92,7 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
     stds_mod = [[] for _ in range(0, d)]
     stds_float = [[] for _ in range(0, d)]
 
-    for month in months:  # iteration among months
+    for month in months[0:3]:  # iteration among months
         if month[-1] == "0":
             month = month[:-1]
         datetime = "2015." + month
@@ -150,29 +150,54 @@ for variable in ["temperature"]:  # list(dict_channel.keys()):
 
     stds_phys = np.array(stds_phys)
     stds_mod = np.array(stds_mod)
-
+    """
     merging = []
     for j in range(np.shape(stds_phys)[1]):
         phys_line = pd.DataFrame(stds_phys[:, j], columns=["0"]).assign(Trial=str(j))
         mod_line = pd.DataFrame(stds_mod[:, j], columns=["1"]).assign(Trial=str(j))
         line_merge = pd.concat([phys_line, mod_line])
-        merging.append(pd.melt(line_merge, id_vars="Trial", var_name="week"))
-
-    fig = plt.figure(figsize=(7, 6))
+        merging.append(pd.melt(line_merge, id_vars="Trial", var_name="model"))
+    """
     sns.set_theme(style="whitegrid")
 
-    for index_week in range(len(merging)):
-        mdf = merging[index_week]
-        bplot = sns.boxplot(y="Trial",
-                            x="value",
-                            hue="week",
-                            data=mdf,
+    for index_week in range(np.shape(stds_phys)[1]):
+        fig, ax1 = plt.subplots(figsize=(7, 6))
+        mdf = [stds_phys[:, index_week], stds_mod[:, index_week]]
+
+        colours = ["w", "w"]
+        sns.set_palette(sns.color_palette(colours))
+
+        flierprops = dict(markerfacecolor='black', markersize=3, markeredgecolor='black')
+
+        bplot = sns.boxplot(data=mdf,
                             orient="h",
-                            linewidth=2)
+                            flierprops=flierprops,
+                            linewidth=2,
+                            )
+
+        for i, box in enumerate(bplot.artists):
+            box.set_edgecolor('black')
+            box.set_facecolor('white')
+
+            # iterate over whiskers and median lines
+            for j in range(6 * i, 6 * (i + 1)):
+                bplot.lines[j].set_color('black')
+
+        for line in ax1.get_lines()[4::12]:
+            line.set_color('darkorange')
+        for line in ax1.get_lines()[10::12]:
+            line.set_color('red')
+
+#        for patch in bplot.artists:
+#            r, g, b, a = patch.get_facecolor()
+#            patch.set_facecolor((r, g, b, .3))
+
+        # plt.legend(title='Model', loc='upper left', labels=['MedBFM', 'Emulator'])
 
         bplot.set_xlabel("")
-        bplot.set_ylabel("")
+        bplot.set_ylabel("week " + str(index_week + 1))
+        plt.legend([], [], frameon=False)
 
-        # bplot.set_yticklabels([str(i+1) for i in range(0, d)])
+        bplot.set_yticklabels([])
         plt.savefig(path_fig + '/' + str(index_week) + '-bp.png')
         plt.close()
