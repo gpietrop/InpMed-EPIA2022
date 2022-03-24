@@ -20,6 +20,7 @@ epoch_float, lr_float = 25, 0.0001
 
 name_model = "model_step1_ep_1975"
 
+paper_path = os.getcwd() + "/paper_fig"
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
@@ -30,7 +31,7 @@ else:
     flag_float = True
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
-dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": 0}
+dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -10}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -155,22 +156,22 @@ for variable in list(dict_channel.keys()):
 
         else:
             zip_result = zip(means_mod, std_mod, means_phys, std_phys)
-            if variable == "oxygen":
-                zip_result = [x for x in zip_result if x[2] > dict_threshold[variable]]
+            zip_result = [x for x in zip_result if x[2] > dict_threshold[variable]]
             if zip_result:
                 means_mod, std_mod, means_phys, std_phys = zip(*zip_result)
             else:
                 continue
 
         mk_size = 3
-        ls = '-'
+        ls = '--'
         lw = 0.75
         color_phys, mk_phys = "slategray", "v"
         color_model, mk_model = "forestgreen", "o"
         color_float, mk_float = "blueviolet", "*"
 
         # MEAN
-        depth_val = range(0, 600, 20)[1:]
+        # depth_val = range(0, 600, 20)[1:]
+        depth_val = np.linspace(0, 600, len(means_phys))
         plt.plot(means_phys[::-1],
                  depth_val[::-1],
                  color=color_model,
@@ -302,4 +303,6 @@ for variable in list(dict_channel.keys()):
         plt.xlabel(variable + unit)
         plt.ylabel("depth (meters)")
         plt.savefig(path_fig + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
+        if month in ["11", "28"]:
+            plt.savefig(paper_path + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
         plt.close()

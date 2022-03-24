@@ -94,7 +94,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
     stds_mod = [[] for _ in range(0, d)]
     stds_float = [[] for _ in range(0, d)]
 
-    for month in months[2:4]:  # iteration among months
+    for month in months:  # iteration among months
         if month[-1] == "0":
             month = month[:-1]
         datetime = "2015." + month
@@ -191,10 +191,16 @@ for variable in dict_channel:  # list(dict_channel.keys()):
         for line in ax1.get_lines()[10::12]:
             line.set_color("red")
 
+        if variable == "temperature":
+            plt.title("week " + str(index_week + 1))
+        if index_week == 0:
+            bplot.set_ylabel(variable)
+        else:
+            bplot.set_ylabel("")
+
         # plt.legend(title="Model", loc="upper left", labels=["MedBFM", "Emulator"])
 
         bplot.set_xlabel("")
-        bplot.set_ylabel("week " + str(index_week + 1))
         plt.legend([], [], frameon=False)
 
         bplot.set_yticklabels([])
