@@ -19,9 +19,14 @@ sns.set(context="notebook", style="whitegrid")
 
 epoch_float, lr_float = 25, 0.0001
 
-name_model = "model_step1_ep_1975"
+# name_model = "model_step1_ep_1975"
+name_model = "phase3_ep_475"
 
-paper_path = os.getcwd() + "/paper_fig"
+paper_path = os.getcwd() + "/paper_fig" + name_model
+if not os.path.exists(paper_path):
+    os.mkdir(paper_path)
+if not os.path.exists(paper_path + "/std_bp/"):
+    os.mkdir(paper_path + "/std_bp/")
 model_considered = "model2015/" + name_model
 path_model = os.getcwd() + "/model/" + model_considered + ".pt"
 path_model_float = os.getcwd() + "/result2/" + name_model + "/" + str(epoch_float) + "/" + str(lr_float) + "/model.pt"
@@ -33,6 +38,8 @@ else:
 
 dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 4}
 dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
+dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+
 
 for variable in dict_channel:  # list(dict_channel.keys()):
     snaperiod = 25
@@ -75,7 +82,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
     path_fig = os.getcwd() + "/analysis_result/profile/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = os.getcwd() + "/analysis_result/profile/" + name_model[23:] + "/"
+    path_fig = os.getcwd() + "/analysis_result/profile/" + name_model + "/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
     if flag_float:
@@ -85,7 +92,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
     path_fig = path_fig + variable
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = path_fig + "/std_boxplot/"
+    path_fig = path_fig + "/std_bp/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
 
@@ -194,7 +201,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
         if variable == "temperature":
             plt.title("week " + str(index_week + 1))
         if index_week == 0:
-            bplot.set_ylabel(variable)
+            bplot.set_ylabel(variable + dict_unit[variable])
         else:
             bplot.set_ylabel("")
 

@@ -348,13 +348,13 @@ for ep in range(epoch_adv):
                     plt.close()
 
     if ep % snaperiod == 0:  # save the partial model
-        torch.save(model_completion.state_dict(), "model/model2015/phase3_ep_" + str(ep) + ".pt")
-        torch.save(model_completion.state_dict(), path_model + "/phase3_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), "model/model2015/model_step3_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), path_model + "/model_step3_ep_" + str(ep) + ".pt")
 
 f.close()
 
-torch.save(model_completion.state_dict(), "model/model2015/phase3_ep_" + str(epoch_adv) + ".pt")
-torch.save(model_completion.state_dict(), path_lr + "/phase3_ep_" + str(epoch_adv) + ".pt")
+torch.save(model_completion.state_dict(), "model/model2015/model_step3_ep_" + str(epoch_adv) + ".pt")
+torch.save(model_completion.state_dict(), path_lr + "/model_step3_ep_" + str(epoch_adv) + ".pt")
 
 Plot_Error(losses_3_c_test, "3c", path_lr + "/")
 Plot_Error(losses_3_d, "3d", path_lr + "/")

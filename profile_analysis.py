@@ -18,9 +18,14 @@ sns.set(context='notebook', style='whitegrid')
 
 epoch_float, lr_float = 25, 0.0001
 
-name_model = "model_step1_ep_1975"
+# name_model = "model_step1_ep_1975"
+name_model = "phase3_ep_475"
 
-paper_path = os.getcwd() + "/paper_fig"
+paper_path = os.getcwd() + "/paper_fig/" + name_model
+if not os.path.exists(paper_path):
+    os.mkdir(paper_path)
+if not os.path.exists(paper_path + "/mean+std/"):
+    os.mkdir(paper_path + "/mean+std/")
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
@@ -32,6 +37,8 @@ else:
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
 dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -10}
+dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -74,7 +81,7 @@ for variable in list(dict_channel.keys()):
     path_fig = os.getcwd() + '/analysis_result/profile/'
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = os.getcwd() + '/analysis_result/profile/' + name_model[23:] + '/'
+    path_fig = os.getcwd() + '/analysis_result/profile/' + name_model + '/'
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
     if flag_float:
@@ -202,10 +209,8 @@ for variable in list(dict_channel.keys()):
             plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
-        if variable == "temperature":
-            unit = " (degrees °C)"
-        plt.xlabel(variable + unit)
-        plt.ylabel("depth (meters)")
+        plt.xlabel(variable + dict_unit[variable])
+        plt.ylabel("depth (m)")
         plt.savefig(path_fig + '/mean/' + variable + '_pro_mean_' + month + '.png')
         plt.close()
 
@@ -240,10 +245,8 @@ for variable in list(dict_channel.keys()):
             plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
-        if variable == "temperature":
-            unit = " (degrees °C)"
-        plt.xlabel(variable + unit)
-        plt.ylabel("depth (meters)")
+        plt.xlabel(variable + dict_unit[variable])
+        plt.ylabel("depth (m)")
         plt.savefig(path_fig + '/std/' + variable + '_pro_std_' + month + '.png')
         plt.close()
 
@@ -298,10 +301,8 @@ for variable in list(dict_channel.keys()):
             plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
-        if variable == "temperature":
-            unit = " (degrees °C)"
-        plt.xlabel(variable + unit)
-        plt.ylabel("depth (meters)")
+        plt.xlabel(variable + dict_unit[variable])
+        plt.ylabel("depth (m)")
         plt.savefig(path_fig + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
         if month in ["11", "28"]:
             plt.savefig(paper_path + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
