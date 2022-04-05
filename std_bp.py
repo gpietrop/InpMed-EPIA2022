@@ -2,6 +2,7 @@ import os
 import random
 import torch
 
+import matplotlib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,14 +16,16 @@ from mean_pixel_value import MV_pixel
 from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution, number_channel
 
-sns.set(context="notebook", style="whitegrid")
+sns.set(context='notebook', style='whitegrid')
+matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
+
 
 epoch_float, lr_float = 25, 0.0001
 
-# name_model = "model_step1_ep_1975"
-name_model = "phase3_ep_475"
+name_model = "model_step1_ep_4975"
+# name_model = "phase3_ep_575"
 
-paper_path = os.getcwd() + "/paper_fig" + name_model
+paper_path = os.getcwd() + "/paper_fig/" + name_model
 if not os.path.exists(paper_path):
     os.mkdir(paper_path)
 if not os.path.exists(paper_path + "/std_bp/"):
@@ -40,10 +43,12 @@ dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 
 dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
 dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
 
+dict_limit_plot = {"temperature": [5, 8], "salinity": [75, 105], "oxygen": [13, 20], "chla": [0, 3], "ppn": [0, 6]}
+
 
 for variable in dict_channel:  # list(dict_channel.keys()):
     snaperiod = 25
-    print("plotting " + variable + " vertical profile")
+    print("plotting " + variable + " bp")
 
     constant_latitude = 111  # 1° of latitude corresponds to 111 km
     constant_longitude = 111  # 1° of latitude corresponds to 111 km
@@ -52,9 +57,9 @@ for variable in dict_channel:  # list(dict_channel.keys()):
     depth_min, depth_max = depth_interval
     w_res, h_res, d_res = resolution
 
-    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
-    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
-    d_d = np.int((depth_max - depth_min) / d_res + 1) - 1
+    w = int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
+    h = int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d_d = int((depth_max - depth_min) / d_res + 1) - 1
     d = d_d - 1
 
     latitude_interval = (lat_min + (lat_max - lat_min) / w, lat_max - (lat_max - lat_min) / w)
@@ -133,6 +138,8 @@ for variable in dict_channel:  # list(dict_channel.keys()):
             std_flo = []
 
         for depth_index in range(0, d):  # iteration among depth
+            if variable == "chla" and depth_index > 10:
+                continue
             unkn_phys = data_tensor[:, dict_channel[variable], depth_index, :, :]
             unkn_model = model_result[:, dict_channel[variable], depth_index, :, :]
             if flag_float:
@@ -159,15 +166,6 @@ for variable in dict_channel:  # list(dict_channel.keys()):
 
     stds_phys = np.array(stds_phys)
     stds_mod = np.array(stds_mod)
-    """
-    merging = []
-    for j in range(np.shape(stds_phys)[1]):
-        phys_line = pd.DataFrame(stds_phys[:, j], columns=["0"]).assign(Trial=str(j))
-        mod_line = pd.DataFrame(stds_mod[:, j], columns=["1"]).assign(Trial=str(j))
-        line_merge = pd.concat([phys_line, mod_line])
-        merging.append(pd.melt(line_merge, id_vars="Trial", var_name="model"))
-    """
-    sns.set_theme(style="whitegrid")
 
     for index_week in range(np.shape(stds_phys)[1]):
         fig, ax1 = plt.subplots()
@@ -194,9 +192,9 @@ for variable in dict_channel:  # list(dict_channel.keys()):
                 bplot.lines[j].set_color("black")
 
         for line in ax1.get_lines()[4::12]:
-            line.set_color("darkorange")
+            line.set_color("slategray")
         for line in ax1.get_lines()[10::12]:
-            line.set_color("red")
+            line.set_color("forestgreen")
 
         if variable == "temperature":
             plt.title("week " + str(index_week + 1))
@@ -208,6 +206,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
         # plt.legend(title="Model", loc="upper left", labels=["MedBFM", "Emulator"])
 
         bplot.set_xlabel("")
+        plt.xlim(dict_limit_plot[variable][0], dict_limit_plot[variable][1])
         plt.legend([], [], frameon=False)
 
         bplot.set_yticklabels([])

@@ -3,6 +3,7 @@ import random
 import torch
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -15,25 +16,34 @@ from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
 sns.set(context='notebook', style='whitegrid')
+matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
 total_epoch_float = 250
-epoch_float, lr_float = 200, 0.01
+epoch_float, lr_float = 100, 0.001
 
-# name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
-name_model = "model_completion_epoch_1000_1000_400_lrc_0.01_lrd_0.01"
-# name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01+epoch_250_lr_0.001"
+name_model = "model_step1_ep_4975"
+# name_model = "phase3_ep_1075"
+
+paper_path = os.getcwd() + "/paper_fig/" + name_model
+if not os.path.exists(paper_path):
+    os.mkdir(paper_path)
+if not os.path.exists(paper_path + "/profile/"):
+    os.mkdir(paper_path + "/profile/")
 
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
-path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(total_epoch_float) + '/' + str(lr_float) + '/model_' + str(epoch_float) + '.pt'
+path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(total_epoch_float) + '/' + str(
+    lr_float) + '/model_' + str(epoch_float) + '.pt'
+
 if not os.path.exists(path_model_float):
     flag_float = False
 else:
     flag_float = True
 print(flag_float)
 
-dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
-# dict_channel = {'temperature': 0}
+dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
+dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0.01, "ppn": 0.1}
+dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -45,9 +55,9 @@ for variable in list(dict_channel.keys()):
     depth_min, depth_max = depth_interval
     w_res, h_res, d_res = resolution
 
-    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
-    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
-    d_d = np.int((depth_max - depth_min) / d_res + 1) - 1
+    w = int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
+    h = int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d_d = int((depth_max - depth_min) / d_res + 1) - 1
     d = d_d - 1
 
     latitude_interval = (lat_min + (lat_max - lat_min) / w, lat_max - (lat_max - lat_min) / w)
@@ -61,7 +71,7 @@ for variable in list(dict_channel.keys()):
     mvp_dataset = get_list_model_tensor()
     mvp_dataset, mean_model, std_model = Normalization(mvp_dataset)
     mean_value_pixel = MV_pixel(mvp_dataset)  # compute the mean of the channel of the training set
-    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
+    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 5, 1, 1, 1))
 
     model = CompletionN()
     model.load_state_dict(torch.load(path_model))  # network trained only with model information
@@ -72,7 +82,7 @@ for variable in list(dict_channel.keys()):
         model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
         model_float.eval()
 
-    path_fig = os.getcwd() + '/analysis_result/surface_time_series/' + name_model[23:] + '/'
+    path_fig = os.getcwd() + '/analysis_result/surface_time_series/' + name_model[6:] + '/'
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
     if flag_float:
@@ -140,79 +150,149 @@ for variable in list(dict_channel.keys()):
 
     if flag_float:
         zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
-        if variable == "oxygen":
-            zip_result = [x for x in zip_result if x[4] > 50]
-        if variable == "salinity":
-            zip_result = [x for x in zip_result if x[4] > 10]
-        if variable == "temperature":
-            zip_result = [x for x in zip_result if x[4] > 8 or x[0] > 8]
-        means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*zip_result)
+        zip_result = [x for x in zip_result if x[4] > dict_threshold[variable]]
+        if zip_result:
+            means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*zip_result)
+        else:
+            continue
+
     else:
         zip_result = zip(means_mod, std_mod, means_phys, std_phys)
-        if variable == "oxygen":
-            zip_result = [x for x in zip_result if x[2] > 50]
-        if variable == "salinity":
-            zip_result = [x for x in zip_result if x[2] > 10]
-        if variable == "temperature":
-            zip_result = [x for x in zip_result if x[2] > 8 or x[0] > 8]
-        means_mod, std_mod, means_phys, std_phys = zip(*zip_result)
+        zip_result = [x for x in zip_result if x[2] > dict_threshold[variable]]
+        if zip_result:
+            means_mod, std_mod, means_phys, std_phys = zip(*zip_result)
+        else:
+            continue
 
-    # plt.plot(means_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
-    plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+    mk_size = 5
+    ls = '--'
+    lw = 0.75
+    color_phys, mk_phys = "slategray", "v"
+    color_model, mk_model = "forestgreen", "o"
+    color_float, mk_float = "blueviolet", "*"
+
+    # MEAN
+    plt.plot(means_phys,
+             color=color_phys,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_phys,
+             markersize=mk_size,
+             alpha=0.8)
+    plt.plot(means_mod,
+             color=color_model,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_model,
+             markersize=mk_size,
+             alpha=0.8)
     if flag_float:
-        plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
-        # plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
-        plt.legend(["CNN + GAN model", "CNN + GAN + float"])
+        plt.plot(means_flo,
+                 color=color_float,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_float,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
     else:
-        plt.legend(["physical model", "CNN"])
-    plt.ylabel(variable)
-    plt.suptitle("MEAN")
-    plt.title("Surface time series of the " + variable)
+        plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
+    months = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    default_x_ticks = np.linspace(0, len(means_phys), 12)
+    plt.xticks(default_x_ticks, months)
+
+    plt.ylabel(variable + dict_unit[variable])
+    # plt.title("Surface time series of the " + variable)
     plt.savefig(path_fig + '/' + variable + '_ts_mean.png')
     plt.close()
 
-    # plt.plot(std_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
-    plt.plot(std_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+    # STD
+    plt.plot(std_phys,
+             color=color_phys,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_phys,
+             markersize=mk_size,
+             alpha=0.8)
+    plt.plot(std_mod,
+             color=color_model,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_model,
+             markersize=mk_size,
+             alpha=0.8)
     if flag_float:
-        plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
-        # plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
-        plt.legend(["CNN + GAN model", "CNN + GAN + float"])
+        plt.plot(std_flo,
+                 color=color_float,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_float,
+                 markersize=mk_size,
+                 alpha=0.8)
+        plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
     else:
-        plt.legend(["physical model", "CNN"])
-    plt.ylabel(variable)
-    plt.suptitle("STD")
-    plt.title("Surface time series of the " + variable)
+        plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
+
+    months = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    default_x_ticks = np.linspace(0, len(means_phys), 12)
+    plt.xticks(default_x_ticks, months)
+
+    plt.ylabel(variable + dict_unit[variable])
+    # plt.title("Surface time series of the " + variable)
     plt.savefig(path_fig + '/' + variable + '_ts_std.png')
     plt.close()
 
-    plt.plot(means_phys, color="slategray", linestyle='--', marker='h', alpha=0.8)
+    plt.plot(means_phys,
+             color=color_phys,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_phys,
+             markersize=mk_size,
+             alpha=0.8)
     plt.fill_between(range(len(means_phys)),
                      np.array(means_phys) - np.array(std_phys) / 2,
                      np.array(means_phys) + np.array(std_phys) / 2,
-                     color="slategray",
+                     color=color_phys,
                      alpha=0.2
                      )
-    plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+    plt.plot(means_mod,
+             color=color_model,
+             linestyle=ls,
+             linewidth=lw,
+             marker=mk_model,
+             markersize=mk_size,
+             alpha=0.8)
     plt.fill_between(range(len(means_mod)),
                      np.array(means_mod) - np.array(std_mod) / 2,
                      np.array(means_mod) + np.array(std_mod) / 2,
-                     color="deeppink",
+                     color=color_model,
                      alpha=0.2
                      )
     if flag_float:
-        plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
+        plt.plot(means_flo,
+                 color=color_float,
+                 linestyle=ls,
+                 linewidth=lw,
+                 marker=mk_float,
+                 markersize=mk_size,
+                 alpha=0.8)
         plt.fill_between(range(len(means_flo)),
                          np.array(means_flo) - np.array(std_flo) / 2,
                          np.array(means_flo) + np.array(std_flo) / 2,
-                         color="purple",
+                         color=color_float,
                          alpha=0.2
                          )
-        plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+        plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
     else:
-        plt.legend(["physical model", "CNN"])
-    plt.ylabel(variable)
-    plt.suptitle("MEAN+STD")
-    plt.title("Surface time series of the " + variable)
-    plt.savefig(path_fig + '/' + variable + '_ts_mean+std.png')
-    plt.close()
+        plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
 
+    months = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    default_x_ticks = np.linspace(0, len(means_phys), 12)
+    plt.xticks(default_x_ticks, months)
+
+    plt.ylabel(variable + dict_unit[variable])
+    # plt.suptitle("MEAN+STD")
+    # plt.title("Surface time series of the " + variable)
+    plt.savefig(path_fig + '/' + variable + '_ts_mean+std.png')
+    plt.savefig(paper_path + '/profile/' + variable + '_ts_mean+std.png')
+    plt.close()

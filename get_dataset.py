@@ -45,7 +45,7 @@ def get_list_sat_tensor():
     return sat_tensor
 
 
-directory_weight = path_directory + '/weight_tensor/'
+directory_weight = path_directory + '/weight_tensor/(12, 12, 20)/'
 
 
 def get_list_float_weight_tensor():

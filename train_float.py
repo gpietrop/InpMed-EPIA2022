@@ -16,14 +16,12 @@ from float_mask import *
 
 # first of all we get the model trained with model's data
 path_model = 'model/model2015/'
-# select_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01+epoch_500_lr_0.001.pt'
-select_model = 'model_completion_epoch_1000_1000_400_lrc_0.01_lrd_0.01.pt'
-# select_model = "model_PHASE1_completion_epoch_1000_lrc_0.01.pt"
-name_model = select_model[:-3]
+name_model = "phase3_ep_850"
+
 print('model used : ', name_model)
 
 model_completion = CompletionN()
-model_completion.load_state_dict(torch.load(path_model + select_model))
+model_completion.load_state_dict(torch.load(path_model + name_model + ".pt"))
 model_completion.eval()
 
 path = 'result2/' + name_model + '/'  # where we save the information
@@ -48,9 +46,9 @@ testing_x_model = test_dataset[index_test]
 testing_weight = weight_float[index_test]
 
 mean_value_pixel = MV_pixel(test_dataset)
-mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
+mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 5, 1, 1, 1))
 
-lr = 1e-02
+lr = 1e-03
 epoch = 250  # number of step for the first phase of training
 snaperiod = 50
 hole_min_d, hole_max_d = 5, 10
@@ -158,7 +156,7 @@ for ep in range(epoch):
 
             number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
 
-            for channel in [0, 1, 2, 3]:
+            for channel in [0, 1, 2, 3, 4]:
                 for i in range(number_fig):
                     path_fig_channel = path_fig_epoch + '/' + str(channel)
                     if not os.path.exists(path_fig_channel):

@@ -12,7 +12,8 @@ def make_float_mask(weight, mask):
     training_mask = mask + weight
     training_mask[training_mask == 2] = 1  # if I have pixel where I have both mask and weight
 
-    sum_along_channel_mask = torch.sum(training_mask, 1)
+    sum_along_channel_mask = torch.sum(training_mask[:, :4, :, :, :], 1)  # do not sum over ppn channel as I have no
+    # info there
     training_mask[:, 0:1, :, :] = sum_along_channel_mask  # NON CONSIDERI UNA DIM???
     training_mask = training_mask[:, 0:1, :, :]
 

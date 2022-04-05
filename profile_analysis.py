@@ -3,6 +3,7 @@ import random
 import torch
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -15,11 +16,13 @@ from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution, number_channel
 
 sns.set(context='notebook', style='whitegrid')
+matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
-epoch_float, lr_float = 25, 0.0001
+epoch_float_tot, lr_float = 250, 0.007
+epoch_float = 9
 
-# name_model = "model_step1_ep_1975"
-name_model = "phase3_ep_475"
+name_model = "model_step1_ep_4975"
+# name_model = "phase3_ep_875"
 
 paper_path = os.getcwd() + "/paper_fig/" + name_model
 if not os.path.exists(paper_path):
@@ -28,10 +31,12 @@ if not os.path.exists(paper_path + "/mean+std/"):
     os.mkdir(paper_path + "/mean+std/")
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
-path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
+path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float_tot) + '/' + str(lr_float) \
+                   + '/model_' + str(epoch_float) + '.pt'
 
 if not os.path.exists(path_model_float):
     flag_float = False
+    print(path_model_float)
 else:
     flag_float = True
 
@@ -169,7 +174,7 @@ for variable in list(dict_channel.keys()):
             else:
                 continue
 
-        mk_size = 3
+        mk_size = 4
         ls = '--'
         lw = 0.75
         color_phys, mk_phys = "slategray", "v"
@@ -181,7 +186,7 @@ for variable in list(dict_channel.keys()):
         depth_val = np.linspace(0, 600, len(means_phys))
         plt.plot(means_phys[::-1],
                  depth_val[::-1],
-                 color=color_model,
+                 color=color_phys,
                  linestyle=ls,
                  linewidth=lw,
                  marker=mk_phys,
@@ -204,9 +209,9 @@ for variable in list(dict_channel.keys()):
                      marker=mk_float,
                      markersize=mk_size,
                      alpha=0.8)
-            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
         plt.xlabel(variable + dict_unit[variable])
@@ -240,9 +245,9 @@ for variable in list(dict_channel.keys()):
                      marker=mk_float,
                      markersize=mk_size,
                      alpha=0.8)
-            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
         plt.xlabel(variable + dict_unit[variable])
@@ -296,9 +301,9 @@ for variable in list(dict_channel.keys()):
                               color=color_float,
                               alpha=0.2
                               )
-            plt.legend(["MedBFM", "Emulator", "InpMed"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
         else:
-            plt.legend(["MedBFM", "Emulator"], prop={'size': 8})
+            plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
 
         plt.gca().invert_yaxis()
         plt.xlabel(variable + dict_unit[variable])

@@ -15,18 +15,17 @@ from hyperparameter import latitude_interval, longitude_interval, depth_interval
 
 sns.set(context='notebook', style='whitegrid')
 
-epoch_float, lr_float = 25, 0.0001
+epoch_float_tot, lr_float = 250, 0.001
+epoch_float = 50
 
-# name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
-name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
-# name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01+epoch_250_lr_0.001"
+name_model = "phase3_ep_850"
 
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
-path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
+path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float_tot) + '/' + str(lr_float) \
+                   + '/model_' + str(epoch_float) + '.pt'
 
-dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
-dict_channel = {'temperature': 0}
+dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, 'ppn' : 4}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -54,7 +53,7 @@ for variable in list(dict_channel.keys()):
     mvp_dataset = get_list_model_tensor()
     mvp_dataset, mean_model, std_model = Normalization(mvp_dataset)
     mean_value_pixel = MV_pixel(mvp_dataset)  # compute the mean of the channel of the training set
-    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
+    mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 5, 1, 1, 1))
 
     model = CompletionN()
     model.load_state_dict(torch.load(path_model))  # network trained only with model information
@@ -139,8 +138,8 @@ for variable in list(dict_channel.keys()):
         for depth_index in range(0, d):  # iteration among depth
 
             if variable == "temperature":
-                pf_min, pf_max = -10, 10
-                fm_min, fm_max = -1, 1
+                pf_min, pf_max = -5, 5
+                fm_min, fm_max = -5, 5
 
             cmap = plt.get_cmap('PiYG')
             plt.imshow(diff_float_model[0, dict_channel[variable], depth_index, :, :], cmap=cmap, vmin=fm_min, vmax=fm_max)

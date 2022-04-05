@@ -37,11 +37,13 @@ mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # HYPERPARAMETERS
-pretrain = 0  # 0 means that we don"t use pretrained model to fine tuning
+pretrain = 1  # 0 means that we don"t use pretrained model to fine tuning
 
+model_completion = CompletionN()
 if pretrain:
     path_pretrain = os.getcwd() + "/starting_model/"
-    model_name = ""
+    epoch_pretrain = 4700
+    model_name = "model_step1_ep_4700.pt"
     model_completion.load_state_dict(torch.load(path_pretrain + model_name))
     model_completion.eval()
 
@@ -50,9 +52,9 @@ alpha = torch.tensor(4e-4)
 lr_c = 0.01
 lr_d = 0.01
 
-epoch_c = 2000  # number of step for the first phase of training
-epoch_d = 2000  # number of step for the second phase of training
-epoch_adv = 5000  # number of step for the third phase of training
+epoch_c = 300  # number of step for the first phase of training
+epoch_d = 1000  # number of step for the second phase of training
+epoch_adv = 10000  # number of step for the third phase of training
 snaperiod = 25
 
 hole_min_d, hole_max_d = 10, 20
@@ -67,7 +69,7 @@ cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
 
 # make directory
-path_configuration = path + "/" + str(epoch_c) + "ep1_" + str(epoch_d) + "ep2_" + str(epoch_adv) + "ep3"
+path_configuration = path + "/" + str(epoch_c + epoch_pretrain) + "ep1_" + str(epoch_d) + "ep2_" + str(epoch_adv) + "ep3"
 if not os.path.exists(path_configuration):
     os.mkdir(path_configuration)
 path_lr = path_configuration + "/" + str(lr_c) + "lrc_" + str(lr_d) + "lrd"
@@ -82,7 +84,6 @@ losses_1_c_test, losses_3_c_test = [], []
 
 # PHASE 1
 
-model_completion = CompletionN()
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 
 f, f_test = open(path_lr + "/train_loss_c1.txt", "w+"), open(path_lr + "/test_loss_c1.txt", "w+")
@@ -139,12 +140,12 @@ for ep in range(epoch_c):
             if not os.path.exists(path_fig):
                 os.mkdir(path_fig)
 
-            path_tensor_epoch = path_tensor + "epoch_" + str(ep)
+            path_tensor_epoch = path_tensor + "epoch_" + str(ep + epoch_pretrain)
             if not os.path.exists(path_tensor_epoch):
                 os.mkdir(path_tensor_epoch)
             torch.save(testing_output, path_tensor_epoch + "/tensor_step1" + ".pt")
 
-            path_fig_epoch = path_fig + "epoch_" + str(ep)
+            path_fig_epoch = path_fig + "epoch_" + str(ep + epoch_pretrain)
             if not os.path.exists(path_fig_epoch):
                 os.mkdir(path_fig_epoch)
 
@@ -175,14 +176,14 @@ for ep in range(epoch_c):
                         plt.close()
 
     if ep % snaperiod == 0:  # save the partial model
-        torch.save(model_completion.state_dict(), "model/model2015/model_step1_ep_" + str(ep) + ".pt")
-        torch.save(model_completion.state_dict(), path_model + "/model_step1_ep_" + str(ep) + ".pt")
+        torch.save(model_completion.state_dict(), "model/model2015/model_step1_ep_" + str(ep + epoch_pretrain) + ".pt")
+        torch.save(model_completion.state_dict(), path_model + "/model_step1_ep_" + str(ep + epoch_pretrain) + ".pt")
 
 f.close()
 f_test.close()
 
-torch.save(model_completion.state_dict(), "model/model2015/step1_ep_" + str(epoch_c) + ".pt")
-torch.save(model_completion.state_dict(), path_lr + "/step1_ep_" + str(epoch_c) + ".pt")
+torch.save(model_completion.state_dict(), "model/model2015/step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
+torch.save(model_completion.state_dict(), path_lr + "/step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
 
 Plot_Error(losses_1_c_test, "1c", path_lr + "/")
 
