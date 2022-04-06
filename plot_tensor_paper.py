@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
 from matplotlib.colors import ListedColormap
+from matplotlib import pyplot, transforms
+
 
 from discriminator import Discriminator
 from completion import CompletionN
@@ -18,12 +20,11 @@ from normalization import Normalization
 from plot_error import Plot_Error
 from get_dataset import *
 
-
 sns.set(context='notebook', style='white')
 matplotlib.rc('font', **{'size': 3, 'weight': 'bold'})
 
 num_channel = number_channel  # 0,1,2,3
-name_model = "model_step1_ep_3680"
+name_model = "model_step1_ep_5000"
 
 epoch_float, lr_float = 25, 0.0007
 
@@ -32,17 +33,20 @@ path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_floa
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
 dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -10}
-dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg",
+             "ppn": " gC/m^2/yr"}
 
 vmin = {"temperature": 0, "salinity": 0, "oxygen": 0, "chla": 0, "ppn": -2}
-vmax = {"temperature": 18, "salinity": 40, "oxygen": 280, "chla": 1, "ppn": 30}
-
+vmax = {"temperature": 20, "salinity": 40, "oxygen": 280, "chla": 1, "ppn": 30}
 
 if not os.path.exists(path_model_float):
     flag_float = False
 else:
     flag_float = True
 
+path = "paper_fig/" + name_model  # result directory
+if not os.path.exists(path):
+    os.mkdir(path)
 path = "paper_fig/" + name_model + "/map/"  # result directory
 if not os.path.exists(path):
     os.mkdir(path)
@@ -62,7 +66,6 @@ hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
 
-
 for variable in list(dict_channel.keys()):
 
     path_variable = path + "/" + variable
@@ -79,9 +82,9 @@ for variable in list(dict_channel.keys()):
     depth_min, depth_max = depth_interval
     w_res, h_res, d_res = resolution
 
-    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
-    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
-    d_d = np.int((depth_max - depth_min) / d_res + 1) - 1
+    w = int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
+    h = int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d_d = int((depth_max - depth_min) / d_res + 1) - 1
     d = d_d - 1
 
     latitude_interval = (lat_min + (lat_max - lat_min) / w, lat_max - (lat_max - lat_min) / w)
@@ -160,11 +163,17 @@ for variable in list(dict_channel.keys()):
             my_cmap[:, -1] = np.linspace(0, 1, cmap.N)
             cmap = ListedColormap(my_cmap)
 
-            plt.imshow(torch.flip(tensor_phys, [0, 1]), vmin=vmin[variable], vmax=vmax[variable], cmap=cmap)
-            default_x_ticks = np.linspace(0, tensor_phys.size(dim=0) + 7, 9)
-            plt.xticks(default_x_ticks, np.linspace(36, 44, 9))
-            default_y_ticks = np.linspace(0, tensor_phys.size(dim=1) - 9, 8)
-            plt.yticks(default_y_ticks, np.linspace(9, 2, 8))
+            base = pyplot.gca().transData
+            rot = transforms.Affine2D().rotate_deg(90)
+
+            plt.imshow(tensor_phys.transpose(0, 1), vmin=vmin[variable], vmax=vmax[variable], cmap=cmap,
+                       interpolation='spline16')
+
+            default_x_ticks = np.linspace(0, tensor_phys.size(dim=0) - 3, 9)
+            plt.xticks(default_x_ticks, [str(int(el)) + "°" for el in np.linspace(36, 44, 9)])
+            default_y_ticks = np.linspace(0, tensor_phys.size(dim=1) - 1, 8)
+            plt.yticks(default_y_ticks, [str(int(el)) + "°" for el in np.linspace(9, 2, 8)])
+
             plt.colorbar()
             plt.savefig(path_month + "/deterministic/deterministic_" + str(depth_index) + ".png")
             plt.close()
@@ -175,11 +184,12 @@ for variable in list(dict_channel.keys()):
             my_cmap[:, -1] = np.linspace(0, 1, cmap.N)
             cmap = ListedColormap(my_cmap)
 
-            plt.imshow(torch.flip(tensor_model, [0, 1]), vmin=vmin[variable], vmax=vmax[variable], cmap=cmap)
-            default_x_ticks = np.linspace(0, tensor_model.size(dim=0) + 7, 9)
-            plt.xticks(default_x_ticks, np.linspace(36, 44, 9))
-            default_y_ticks = np.linspace(0, tensor_model.size(dim=1) - 9, 8)
-            plt.yticks(default_y_ticks, np.linspace(9, 2, 8))
+            plt.imshow(tensor_model.transpose(0, 1), vmin=vmin[variable], vmax=vmax[variable], cmap=cmap,
+                       interpolation='spline16')
+            default_x_ticks = np.linspace(0, tensor_model.size(dim=0) - 3, 9)
+            plt.xticks(default_x_ticks, [str(int(el)) + "°" for el in np.linspace(36, 44, 9)])
+            default_y_ticks = np.linspace(0, tensor_model.size(dim=1) - 1, 8)
+            plt.yticks(default_y_ticks, [str(int(el)) + "°" for el in np.linspace(9, 2, 8)])
             plt.colorbar()
             plt.savefig(path_month + "/EMUMed/emumed" + str(depth_index) + ".png")
             plt.close()
