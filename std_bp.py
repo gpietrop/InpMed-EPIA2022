@@ -22,7 +22,7 @@ matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
 epoch_float, lr_float = 25, 0.0001
 
-name_model = "model_step1_ep_4975"
+# name_model = "model_step1_ep_4975"
 # name_model = "phase3_ep_575"
 
 paper_path = os.getcwd() + "/paper_fig/" + name_model
@@ -41,12 +41,12 @@ else:
 
 dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 4}
 dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
-dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": "gC/m^2/yr"}
 
-dict_limit_plot = {"temperature": [5, 8], "salinity": [75, 105], "oxygen": [13, 20], "chla": [0, 3], "ppn": [0, 6]}
+dict_limit_plot = {"temperature": [5.5, 7], "salinity": [13, 20], "oxygen": [75, 105], "chla": [0, 0.4], "ppn": [0, 0.5]}
 
 
-for variable in dict_channel:  # list(dict_channel.keys()):
+for variable in dict_channel.keys():  # list(dict_channel.keys()):
     snaperiod = 25
     print("plotting " + variable + " bp")
 
@@ -106,6 +106,11 @@ for variable in dict_channel:  # list(dict_channel.keys()):
     stds_mod = [[] for _ in range(0, d)]
     stds_float = [[] for _ in range(0, d)]
 
+    if variable == "chla":
+        stds_phys = [[] for _ in range(0, 10)]
+        stds_mod = [[] for _ in range(0, 10)]
+        stds_float = [[] for _ in range(0, 10)]
+
     for month in months:  # iteration among months
         if month[-1] == "0":
             month = month[:-1]
@@ -138,7 +143,7 @@ for variable in dict_channel:  # list(dict_channel.keys()):
             std_flo = []
 
         for depth_index in range(0, d):  # iteration among depth
-            if variable == "chla" and depth_index > 10:
+            if variable == "chla" and depth_index > 9:
                 continue
             unkn_phys = data_tensor[:, dict_channel[variable], depth_index, :, :]
             unkn_model = model_result[:, dict_channel[variable], depth_index, :, :]

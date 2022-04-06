@@ -42,8 +42,8 @@ pretrain = 1  # 0 means that we don"t use pretrained model to fine tuning
 model_completion = CompletionN()
 if pretrain:
     path_pretrain = os.getcwd() + "/starting_model/"
-    epoch_pretrain = 4700
-    model_name = "model_step1_ep_4700.pt"
+    epoch_pretrain = 5000
+    model_name = "model_step1_ep_" + str(epoch_pretrain) + ".pt"
     model_completion.load_state_dict(torch.load(path_pretrain + model_name))
     model_completion.eval()
 
@@ -52,8 +52,8 @@ alpha = torch.tensor(4e-4)
 lr_c = 0.01
 lr_d = 0.01
 
-epoch_c = 300  # number of step for the first phase of training
-epoch_d = 1000  # number of step for the second phase of training
+epoch_c = 1  # number of step for the first phase of training
+epoch_d = 200  # number of step for the second phase of training
 epoch_adv = 10000  # number of step for the third phase of training
 snaperiod = 25
 
@@ -182,8 +182,8 @@ for ep in range(epoch_c):
 f.close()
 f_test.close()
 
-torch.save(model_completion.state_dict(), "model/model2015/step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
-torch.save(model_completion.state_dict(), path_lr + "/step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
+torch.save(model_completion.state_dict(), "model/model2015/model_step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
+torch.save(model_completion.state_dict(), path_lr + "/model_step1_ep_" + str(epoch_c + epoch_pretrain) + ".pt")
 
 Plot_Error(losses_1_c_test, "1c", path_lr + "/")
 
@@ -235,6 +235,9 @@ for ep in range(epoch_d):
 
 f.close()
 Plot_Error(losses_2_d, "2d", path_lr + "/")
+
+torch.save(model_discriminator.state_dict(), "model/model2015/model_step2_ep_" + str(epoch_d) + ".pt")
+torch.save(model_discriminator.state_dict(), path_lr + "/model_step2_ep_" + str(epoch_d) + ".pt")
 
 # PHASE 3
 

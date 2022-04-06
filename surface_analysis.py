@@ -43,7 +43,7 @@ print(flag_float)
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
 dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0.01, "ppn": 0.1}
-dict_unit = {"temperature": " (degrees °C)", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
