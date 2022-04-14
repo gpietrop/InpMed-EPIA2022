@@ -18,10 +18,10 @@ from hyperparameter import latitude_interval, longitude_interval, depth_interval
 sns.set(context='notebook', style='whitegrid')
 matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
-total_epoch_float = 250
-epoch_float, lr_float = 100, 0.001
+total_epoch_float = 200
+epoch_float, lr_float = 150, 0.001
 
-name_model = "model_step1_ep_4975"
+name_model = "model_step3_ep_800"
 # name_model = "phase3_ep_1075"
 
 paper_path = os.getcwd() + "/paper_fig/" + name_model
@@ -34,6 +34,7 @@ model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(total_epoch_float) + '/' + str(
     lr_float) + '/model_' + str(epoch_float) + '.pt'
+print(path_model_float)
 
 if not os.path.exists(path_model_float):
     flag_float = False
@@ -43,7 +44,8 @@ print(flag_float)
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
 dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0.01, "ppn": 0.1}
-dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg",
+             "ppn": " gC/m^2/yr"}
 
 for variable in list(dict_channel.keys()):
     snaperiod = 25
@@ -126,7 +128,7 @@ for variable in list(dict_channel.keys()):
         mean_unkn = mean_model[0, dict_channel[variable], 0, 0, 0]
         std_unkn = std_model[0, dict_channel[variable], 0, 0, 0]
 
-        depth_index = 0  # here I consider only surface data
+        depth_index = 1  # here I consider only surface data
 
         unkn_phys = data_tensor[:, dict_channel[variable], depth_index, :, :]
         unkn_model = model_result[:, dict_channel[variable], depth_index, :, :]
@@ -138,10 +140,10 @@ for variable in list(dict_channel.keys()):
         if flag_float:
             unkn_float = unkn_float * std_unkn + mean_unkn
 
-        means_phys.append(torch.mean(unkn_phys))
-        means_mod.append(torch.mean(unkn_model))
+        means_phys.append(torch.abs(torch.mean(unkn_phys)))
+        means_mod.append(torch.abs(torch.mean(unkn_model)))
         if flag_float:
-            means_flo.append(torch.mean(unkn_float))
+            means_flo.append(torch.abs(torch.mean(unkn_float)))
 
         std_phys.append(torch.std(unkn_phys))
         std_mod.append(torch.std(unkn_model))
@@ -164,22 +166,22 @@ for variable in list(dict_channel.keys()):
         else:
             continue
 
-    mk_size = 5
+    mk_size = 7
     ls = '--'
     lw = 0.75
     color_phys, mk_phys = "slategray", "v"
-    color_model, mk_model = "forestgreen", "o"
-    color_float, mk_float = "blueviolet", "*"
+    color_model, mk_model = "darkorange", "o"
+    color_float, mk_float = "forestgreen", "*"
 
     # MEAN
-    plt.plot(means_phys,
+    plt.plot(means_phys[:-1],
              color=color_phys,
              linestyle=ls,
              linewidth=lw,
              marker=mk_phys,
              markersize=mk_size,
              alpha=0.8)
-    plt.plot(means_mod,
+    plt.plot(means_mod[:-1],
              color=color_model,
              linestyle=ls,
              linewidth=lw,
@@ -187,7 +189,7 @@ for variable in list(dict_channel.keys()):
              markersize=mk_size,
              alpha=0.8)
     if flag_float:
-        plt.plot(means_flo,
+        plt.plot(means_flo[:-1],
                  color=color_float,
                  linestyle=ls,
                  linewidth=lw,
@@ -207,14 +209,14 @@ for variable in list(dict_channel.keys()):
     plt.close()
 
     # STD
-    plt.plot(std_phys,
+    plt.plot(std_phys[:-1],
              color=color_phys,
              linestyle=ls,
              linewidth=lw,
              marker=mk_phys,
              markersize=mk_size,
              alpha=0.8)
-    plt.plot(std_mod,
+    plt.plot(std_mod[:-1],
              color=color_model,
              linestyle=ls,
              linewidth=lw,
@@ -222,7 +224,7 @@ for variable in list(dict_channel.keys()):
              markersize=mk_size,
              alpha=0.8)
     if flag_float:
-        plt.plot(std_flo,
+        plt.plot(std_flo[:-1],
                  color=color_float,
                  linestyle=ls,
                  linewidth=lw,
@@ -242,49 +244,60 @@ for variable in list(dict_channel.keys()):
     plt.savefig(path_fig + '/' + variable + '_ts_std.png')
     plt.close()
 
-    plt.plot(means_phys,
+    #  MEAN + STD
+
+    plt.plot(means_phys[:-1],
              color=color_phys,
              linestyle=ls,
              linewidth=lw,
+             # markerfacecolor="w",
+             alpha=0.8,
+             label="MedBFM")
+    plt.plot(means_phys[:-1],
+             color=color_phys,
              marker=mk_phys,
              markersize=mk_size,
-             alpha=0.8)
-    plt.fill_between(range(len(means_phys)),
-                     np.array(means_phys) - np.array(std_phys) / 2,
-                     np.array(means_phys) + np.array(std_phys) / 2,
-                     color=color_phys,
-                     alpha=0.2
-                     )
-    plt.plot(means_mod,
+             # markerfacecolor="w",
+             alpha=0.4)
+
+    plt.plot(means_mod[:-1],
              color=color_model,
              linestyle=ls,
              linewidth=lw,
+             # markerfacecolor="w",
+             alpha=0.8,
+             label='EmuMed')
+    plt.plot(means_mod[:-1],
+             color=color_model,
              marker=mk_model,
              markersize=mk_size,
-             alpha=0.8)
-    plt.fill_between(range(len(means_mod)),
-                     np.array(means_mod) - np.array(std_mod) / 2,
-                     np.array(means_mod) + np.array(std_mod) / 2,
-                     color=color_model,
-                     alpha=0.2
-                     )
+             # markerfacecolor="w",
+             alpha=0.4)
+
     if flag_float:
-        plt.plot(means_flo,
+        plt.plot(means_flo[:-1],
                  color=color_float,
                  linestyle=ls,
                  linewidth=lw,
+                 alpha=0.8,
+                 label="InpMed")
+        plt.plot(means_flo[:-1],
+                 color=color_float,
                  marker=mk_float,
                  markersize=mk_size,
-                 alpha=0.8)
+                 # markerfacecolor="w",
+                 alpha=0.4)
+        '''
         plt.fill_between(range(len(means_flo)),
                          np.array(means_flo) - np.array(std_flo) / 2,
                          np.array(means_flo) + np.array(std_flo) / 2,
                          color=color_float,
                          alpha=0.2
                          )
-        plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
+        '''
+        plt.legend(prop={'size': 8})
     else:
-        plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
+        plt.legend(prop={'size': 8})
 
     months = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
     default_x_ticks = np.linspace(0, len(means_phys), 12)

@@ -18,10 +18,10 @@ from hyperparameter import latitude_interval, longitude_interval, depth_interval
 sns.set(context='notebook', style='whitegrid')
 matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
-epoch_float_tot, lr_float = 250, 0.007
-epoch_float = 9
+epoch_float_tot, lr_float = 200, 0.001
+epoch_float = 25
 
-name_model = "model_step1_ep_4975"
+name_model = "model_step3_ep_800"
 # name_model = "phase3_ep_875"
 
 paper_path = os.getcwd() + "/paper_fig/" + name_model
@@ -42,10 +42,11 @@ else:
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
 dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -10}
-dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": " gC/m^2/yr"}
+dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg",
+             "ppn": " gC/m^2/yr"}
+dict_limit_plot = {"temperature": [8, 22], "salinity": [17, 38], "oxygen": [80, 240], "chla": [-0.05, 0.45], "ppn": [-0.5, 8]}
 
-
-for variable in list(dict_channel.keys()):
+for variable in {"ppn": 4}:  # list(dict_channel.keys()):
     snaperiod = 25
     print("plotting " + variable + " vertical profile")
 
@@ -56,9 +57,9 @@ for variable in list(dict_channel.keys()):
     depth_min, depth_max = depth_interval
     w_res, h_res, d_res = resolution
 
-    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
-    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
-    d_d = np.int((depth_max - depth_min) / d_res + 1) - 1
+    w = int((lat_max - lat_min) * constant_latitude / w_res + 1) - 2
+    h = int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d_d = int((depth_max - depth_min) / d_res + 1) - 1
     d = d_d - 1
 
     latitude_interval = (lat_min + (lat_max - lat_min) / w, lat_max - (lat_max - lat_min) / w)
@@ -148,10 +149,13 @@ for variable in list(dict_channel.keys()):
             if flag_float:
                 unkn_float = unkn_float * std_unkn + mean_unkn
 
-            means_phys.append(torch.mean(unkn_phys))
-            means_mod.append(torch.mean(unkn_model))
+            means_phys.append(torch.abs(torch.mean(unkn_phys)))
+            means_mod.append(torch.abs(torch.mean(unkn_model)))
             if flag_float:
-                means_flo.append(torch.mean(unkn_float))
+                if depth_index > 10:
+                    means_flo.append(0)
+                else:
+                    means_flo.append(torch.abs(torch.mean(unkn_float)))
 
             std_phys.append(torch.std(unkn_phys))
             std_mod.append(torch.std(unkn_model))
@@ -174,12 +178,12 @@ for variable in list(dict_channel.keys()):
             else:
                 continue
 
-        mk_size = 4
+        mk_size = 6
         ls = '--'
-        lw = 0.75
+        lw = 1
         color_phys, mk_phys = "slategray", "v"
-        color_model, mk_model = "forestgreen", "o"
-        color_float, mk_float = "blueviolet", "*"
+        color_model, mk_model = "orangered", "o"
+        color_float, mk_float = "forestgreen", "*"
 
         # MEAN
         # depth_val = range(0, 600, 20)[1:]
@@ -191,6 +195,7 @@ for variable in list(dict_channel.keys()):
                  linewidth=lw,
                  marker=mk_phys,
                  markersize=mk_size,
+                 markerfacecolor="w",
                  alpha=0.8)
         plt.plot(means_mod[::-1],
                  depth_val[::-1],
@@ -199,6 +204,7 @@ for variable in list(dict_channel.keys()):
                  linewidth=lw,
                  marker=mk_model,
                  markersize=mk_size,
+                 markerfacecolor="w",
                  alpha=0.8)
         if flag_float:
             plt.plot(means_flo[::-1],
@@ -208,6 +214,7 @@ for variable in list(dict_channel.keys()):
                      linewidth=lw,
                      marker=mk_float,
                      markersize=mk_size,
+                     markerfacecolor="w",
                      alpha=0.8)
             plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
         else:
@@ -227,6 +234,7 @@ for variable in list(dict_channel.keys()):
                  linewidth=lw,
                  marker=mk_phys,
                  markersize=mk_size,
+                 markerfacecolor="w",
                  alpha=0.8)
         plt.plot(std_mod[::-1],
                  depth_val[::-1],
@@ -235,6 +243,7 @@ for variable in list(dict_channel.keys()):
                  linewidth=lw,
                  marker=mk_model,
                  markersize=mk_size,
+                 markerfacecolor="w",
                  alpha=0.8)
         if flag_float:
             plt.plot(std_flo[::-1],
@@ -244,6 +253,7 @@ for variable in list(dict_channel.keys()):
                      linewidth=lw,
                      marker=mk_float,
                      markersize=mk_size,
+                     markerfacecolor="w",
                      alpha=0.8)
             plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
         else:
@@ -261,30 +271,32 @@ for variable in list(dict_channel.keys()):
                  color=color_phys,
                  linestyle=ls,
                  linewidth=lw,
+                 # markerfacecolor="w",
+                 alpha=0.8,
+                 label="MedBFM")
+        plt.plot(means_phys[::-1],
+                 depth_val[::-1],
+                 color=color_phys,
                  marker=mk_phys,
                  markersize=mk_size,
-                 alpha=0.8)
-        plt.fill_betweenx(depth_val[::-1],
-                          (np.array(means_phys) - np.array(std_phys) / 2)[::-1],
-                          (np.array(means_phys) + np.array(std_phys) / 2)[::-1],
-                          color=color_phys,
-                          alpha=0.2
-                          )
+                 # markerfacecolor="w",
+                 alpha=0.4)
 
         plt.plot(means_mod[::-1],
                  depth_val[::-1],
                  color=color_model,
                  linestyle=ls,
                  linewidth=lw,
+                 # markerfacecolor="w",
+                 alpha=0.8,
+                 label='EmuMed')
+        plt.plot(means_mod[::-1],
+                 depth_val[::-1],
+                 color=color_model,
                  marker=mk_model,
                  markersize=mk_size,
-                 alpha=0.8)
-        plt.fill_betweenx(depth_val[::-1],
-                          (np.array(means_mod) - np.array(std_mod) / 2)[::-1],
-                          (np.array(means_mod) + np.array(std_mod) / 2)[::-1],
-                          color=color_model,
-                          alpha=0.2
-                          )
+                 # markerfacecolor="w",
+                 alpha=0.4)
 
         if flag_float:
             plt.plot(means_flo[::-1],
@@ -292,23 +304,30 @@ for variable in list(dict_channel.keys()):
                      color=color_float,
                      linestyle=ls,
                      linewidth=lw,
+                     alpha=0.8,
+                     label="InpMed")
+            plt.plot(means_flo[::-1],
+                     depth_val[::-1],
+                     color=color_float,
                      marker=mk_float,
                      markersize=mk_size,
-                     alpha=0.8)
-            plt.fill_betweenx(depth_val[::-1],
-                              (np.array(means_flo) - np.array(std_flo) / 2)[::-1],
-                              (np.array(means_flo) + np.array(std_flo) / 2)[::-1],
-                              color=color_float,
-                              alpha=0.2
-                              )
-            plt.legend(["MedBFM", "EmuMed", "InpMed"], prop={'size': 8})
+                     # markerfacecolor="w",
+                     alpha=0.4)
+            # plt.fill_betweenx(depth_val[::-1],
+            #                  (np.array(means_flo) - np.array(std_flo) / 2)[::-1],
+            #                  (np.array(means_flo) + np.array(std_flo) / 2)[::-1],
+            #                  color=color_float,
+            #                  alpha=0.2
+            #                  )
+            plt.legend(prop={'size': 8})
         else:
-            plt.legend(["MedBFM", "EmuMed"], prop={'size': 8})
+            plt.legend(prop={'size': 8})
 
         plt.gca().invert_yaxis()
+        plt.xlim(dict_limit_plot[variable])
         plt.xlabel(variable + dict_unit[variable])
         plt.ylabel("depth (m)")
         plt.savefig(path_fig + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
-        if month in ["11", "28"]:
+        if month in ["2", "35"]:
             plt.savefig(paper_path + '/mean+std/' + variable + '_pro_mean_std_' + month + '.png')
         plt.close()

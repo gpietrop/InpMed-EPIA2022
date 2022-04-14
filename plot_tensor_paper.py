@@ -24,7 +24,7 @@ sns.set(context='notebook', style='white')
 matplotlib.rc('font', **{'size': 3, 'weight': 'bold'})
 
 num_channel = number_channel  # 0,1,2,3
-name_model = "model_step1_ep_5000"
+name_model = "model_step3_ep_800"
 
 epoch_float, lr_float = 25, 0.0007
 

@@ -19,10 +19,10 @@ from hyperparameter import latitude_interval, longitude_interval, depth_interval
 sns.set(context='notebook', style='whitegrid')
 matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
+epoch_float_tot, lr_float = 200, 0.01
+epoch_float = 175
 
-epoch_float, lr_float = 25, 0.0001
-
-# name_model = "model_step1_ep_4975"
+name_model = "model_step3_ep_800"
 # name_model = "phase3_ep_575"
 
 paper_path = os.getcwd() + "/paper_fig/" + name_model
@@ -32,8 +32,8 @@ if not os.path.exists(paper_path + "/std_bp/"):
     os.mkdir(paper_path + "/std_bp/")
 model_considered = "model2015/" + name_model
 path_model = os.getcwd() + "/model/" + model_considered + ".pt"
-path_model_float = os.getcwd() + "/result2/" + name_model + "/" + str(epoch_float) + "/" + str(lr_float) + "/model.pt"
-
+path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float_tot) + '/' + str(lr_float) \
+                   + '/model_' + str(epoch_float) + '.pt'
 if not os.path.exists(path_model_float):
     flag_float = False
 else:
@@ -43,10 +43,10 @@ dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 
 dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
 dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": "gC/m^2/yr"}
 
-dict_limit_plot = {"temperature": [5.5, 7], "salinity": [13, 20], "oxygen": [75, 105], "chla": [0, 0.4], "ppn": [0, 0.5]}
+dict_limit_plot = {"temperature": [5.5, 7], "salinity": [13, 20], "oxygen": [75, 105], "chla": [0, 0.4],
+                   "ppn": [-0.05, 0.75]}
 
-
-for variable in dict_channel.keys():  # list(dict_channel.keys()):
+for variable in {"ppn": 4}:  # dict_channel.keys():  # list(dict_channel.keys()):
     snaperiod = 25
     print("plotting " + variable + " bp")
 
@@ -84,10 +84,10 @@ for variable in dict_channel.keys():  # list(dict_channel.keys()):
         model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
         model_float.eval()
 
-    path_fig = os.getcwd() + "/analysis_result/profile/"
+    path_fig = os.getcwd() + "/analysis_result/std_bp/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = os.getcwd() + "/analysis_result/profile/" + name_model + "/"
+    path_fig = os.getcwd() + "/analysis_result/std_bp/" + name_model + "/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
     if flag_float:
@@ -95,9 +95,6 @@ for variable in dict_channel.keys():  # list(dict_channel.keys()):
         if not os.path.exists(path_fig):
             os.mkdir(path_fig)
     path_fig = path_fig + variable
-    if not os.path.exists(path_fig):
-        os.mkdir(path_fig)
-    path_fig = path_fig + "/std_bp/"
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
 
@@ -168,13 +165,16 @@ for variable in dict_channel.keys():  # list(dict_channel.keys()):
             if torch.mean(unkn_phys) > dict_threshold[variable]:
                 stds_phys[depth_index].append(float(torch.std(unkn_phys)))
                 stds_mod[depth_index].append(float(torch.std(unkn_model)))
+                if flag_float:
+                    stds_float[depth_index].append(float(torch.std(unkn_float)))
 
     stds_phys = np.array(stds_phys)
     stds_mod = np.array(stds_mod)
+    stds_float = np.array(stds_float)
 
     for index_week in range(np.shape(stds_phys)[1]):
         fig, ax1 = plt.subplots()
-        mdf = [stds_phys[:, index_week], stds_mod[:, index_week]]
+        mdf = [stds_phys[:, index_week], stds_float[:, index_week]]
 
         colours = ["w", "w"]
         sns.set_palette(sns.color_palette(colours))
@@ -192,7 +192,7 @@ for variable in dict_channel.keys():  # list(dict_channel.keys()):
             box.set_edgecolor("black")
             box.set_facecolor("white")
 
-        # iterate over whiskers and median lines
+            # iterate over whiskers and median lines
             for j in range(6 * i, 6 * (i + 1)):
                 bplot.lines[j].set_color("black")
 
