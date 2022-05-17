@@ -20,7 +20,7 @@ sns.set(context='notebook', style='whitegrid')
 matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
 epoch_float_tot, lr_float = 200, 0.01
-epoch_float = 175
+epoch_float = 0
 
 name_model = "model_step3_ep_800"
 # name_model = "phase3_ep_575"
@@ -43,10 +43,11 @@ dict_channel = {"temperature": 0, "salinity": 1, "oxygen": 2, "chla": 3, "ppn": 
 dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
 dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg", "ppn": "gC/m^2/yr"}
 
-dict_limit_plot = {"temperature": [5.5, 7], "salinity": [13, 20], "oxygen": [75, 105], "chla": [0, 0.4],
-                   "ppn": [-0.05, 0.75]}
+dict_limit_plot = {"temperature": [0, 2], "salinity": [0, 4], "oxygen": [0, 30], "chla": [0, 0.4],
+                   "ppn": [-0.05, 0.7]}
 
-for variable in {"ppn": 4}:  # dict_channel.keys():  # list(dict_channel.keys()):
+
+for variable in ["chla"]:  # list(dict_channel.keys()):
     snaperiod = 25
     print("plotting " + variable + " bp")
 
@@ -147,26 +148,33 @@ for variable in {"ppn": 4}:  # dict_channel.keys():  # list(dict_channel.keys())
             if flag_float:
                 unkn_float = float_result[:, dict_channel[variable], depth_index, :, :]
 
+            # print(unkn_phys)
+            # print(unkn_phys[0,0, 0])
             unkn_phys = unkn_phys * std_unkn + mean_unkn
+            unkn_phys[unkn_phys < dict_threshold[variable]] = torch.nan
+
             unkn_model = unkn_model * std_unkn + mean_unkn
+            unkn_model[unkn_model < dict_threshold[variable]] = torch.nan
+
             if flag_float:
                 unkn_float = unkn_float * std_unkn + mean_unkn
+                unkn_float[unkn_float < dict_threshold[variable]] = torch.nan
 
-            means_phys.append(torch.mean(unkn_phys))
-            means_mod.append(torch.mean(unkn_model))
+            means_phys.append(torch.nanmean(unkn_phys))
+            means_mod.append(torch.nanmean(unkn_model))
             if flag_float:
-                means_flo.append(torch.mean(unkn_float))
-
+                means_flo.append(torch.nanmean(unkn_float))
+            # print(np.nanstd(unkn_phys.numpy()))
             std_phys.append(torch.std(unkn_phys))
             std_mod.append(torch.std(unkn_model))
             if flag_float:
                 std_flo.append(torch.std(unkn_float))
 
-            if torch.mean(unkn_phys) > dict_threshold[variable]:
-                stds_phys[depth_index].append(float(torch.std(unkn_phys)))
-                stds_mod[depth_index].append(float(torch.std(unkn_model)))
-                if flag_float:
-                    stds_float[depth_index].append(float(torch.std(unkn_float)))
+            # if torch.mean(unkn_phys) > dict_threshold[variable]:
+            stds_phys[depth_index].append(float(np.nanstd(unkn_phys.numpy())))
+            stds_mod[depth_index].append(float(np.nanstd(unkn_model.numpy())))
+            if flag_float:
+                stds_float[depth_index].append(float(np.nanstd(unkn_float.numpy())))
 
     stds_phys = np.array(stds_phys)
     stds_mod = np.array(stds_mod)
@@ -184,7 +192,7 @@ for variable in {"ppn": 4}:  # dict_channel.keys():  # list(dict_channel.keys())
         bplot = sns.boxplot(data=mdf,
                             orient="h",
                             flierprops=flierprops,
-                            linewidth=2,
+                            linewidth=3.5,
                             # showfliers=False
                             )
 

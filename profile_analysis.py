@@ -19,7 +19,7 @@ sns.set(context='notebook', style='whitegrid')
 matplotlib.rc('font', **{'size': 8, 'weight': 'bold'})
 
 epoch_float_tot, lr_float = 200, 0.001
-epoch_float = 25
+epoch_float = 100
 
 name_model = "model_step3_ep_800"
 # name_model = "phase3_ep_875"
@@ -41,12 +41,13 @@ else:
     flag_float = True
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3, "ppn": 4}
-dict_threshold = {"temperature": 5, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -10}
+dict_threshold = {"temperature": 3, "salinity": 10, "oxygen": 50, "chla": 0, "ppn": -30}
 dict_unit = {"temperature": " degrees °C", "salinity": " mg/Kg", "oxygen": " mol", "chla": " mg/Kg",
              "ppn": " gC/m^2/yr"}
-dict_limit_plot = {"temperature": [8, 22], "salinity": [17, 38], "oxygen": [80, 240], "chla": [-0.05, 0.45], "ppn": [-0.5, 8]}
+dict_limit_plot = {"temperature": [10, 25], "salinity": [32, 45], "oxygen": [150, 300], "chla": [-0.05, 0.6],
+                   "ppn": [-0.5, 10]}
 
-for variable in {"ppn": 4}:  # list(dict_channel.keys()):
+for variable in ["ppn"]:
     snaperiod = 25
     print("plotting " + variable + " vertical profile")
 
@@ -145,22 +146,26 @@ for variable in {"ppn": 4}:  # list(dict_channel.keys()):
                 unkn_float = float_result[:, dict_channel[variable], depth_index, :, :]
 
             unkn_phys = unkn_phys * std_unkn + mean_unkn
+            unkn_phys[unkn_phys < dict_threshold[variable]] = torch.nan
+
             unkn_model = unkn_model * std_unkn + mean_unkn
+            unkn_model[unkn_model < dict_threshold[variable]] = torch.nan
+
             if flag_float:
                 unkn_float = unkn_float * std_unkn + mean_unkn
+                unkn_float[unkn_float < dict_threshold[variable]] = torch.nan
+                if depth_index > 8:
+                    unkn_float[unkn_float < 0.3] = 0
 
-            means_phys.append(torch.abs(torch.mean(unkn_phys)))
-            means_mod.append(torch.abs(torch.mean(unkn_model)))
+            means_phys.append(torch.nanmean(unkn_phys))
+            means_mod.append(torch.nanmean(unkn_model))
             if flag_float:
-                if depth_index > 10:
-                    means_flo.append(0)
-                else:
-                    means_flo.append(torch.abs(torch.mean(unkn_float)))
+                means_flo.append(torch.nanmean(unkn_float))
 
-            std_phys.append(torch.std(unkn_phys))
-            std_mod.append(torch.std(unkn_model))
+            std_phys.append(np.nanstd(unkn_phys.numpy()))
+            std_mod.append(np.nanstd(unkn_model.numpy()))
             if flag_float:
-                std_flo.append(torch.std(unkn_float))
+                std_flo.append(np.nanstd(unkn_float.numpy()))
 
         if flag_float:
             zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
