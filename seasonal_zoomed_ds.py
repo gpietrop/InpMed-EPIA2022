@@ -75,33 +75,49 @@ for variable in list(dict_channel.keys()):
         os.mkdir(path_fig)
 
     months = ["0" + str(month) for month in range(1, 10)] + [str(month) for month in range(10, 52)]
+    dict_season = {"winter": months[0:12],
+                   "spring": months[12:25],
+                   "summer": months[25:38],
+                   "autumn": months[38:-1]}
 
-    for month in months:  # iteration among months
-        if month[-1] == "0":
-            month = month[:-1]
-        datetime = "2015." + month
-        data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(
-            datetime) + '.pt'  # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (
-        # NORMALIZED!!)
-        data_tensor = torch.load(data_tensor)
+    unkn_phys = torch.zeros([1, 5, 30, 65, 73])
+    unkn_model = torch.zeros([1, 5, 29, 65, 73])
+    unkn_float = torch.zeros([1, 5, 29, 65, 73])
 
-        # TEST ON THE MODEL'S MODEL AND THE FLOAT MODEL WITH SAME HOLE
-        with torch.no_grad():
-            training_mask = generate_input_mask(
-                shape=(data_tensor.shape[0], 1, data_tensor.shape[2], data_tensor.shape[3], data_tensor.shape[4]),
-                hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w))
-            data_tensor_mask = data_tensor - data_tensor * training_mask + mean_value_pixel * training_mask
-            input = torch.cat((data_tensor_mask, training_mask), dim=1)
+    for season in dict_season.keys():
+        for month in dict_season[season]:  # iteration among months
+            number_months = len(dict_season[season])
+            if month[-1] == "0":
+                month = month[:-1]
+            datetime = "2015." + month
+            data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(datetime) + '.pt'
+            data_tensor = torch.load(data_tensor)
 
-            model_result = model(input.float())
-            float_result = model_float(input.float())
+            # TEST ON THE MODEL'S MODEL AND THE FLOAT MODEL WITH SAME HOLE
+            with torch.no_grad():
+                training_mask = generate_input_mask(
+                    shape=(data_tensor.shape[0], 1, data_tensor.shape[2], data_tensor.shape[3], data_tensor.shape[4]),
+                    hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w))
+                data_tensor_mask = data_tensor - data_tensor * training_mask + mean_value_pixel * training_mask
+                input = torch.cat((data_tensor_mask, training_mask), dim=1)
 
-        mean_unkn = mean_model[0, dict_channel[variable], 0, 0, 0]
-        std_unkn = std_model[0, dict_channel[variable], 0, 0, 0]
+                model_result = model(input.float())
+                float_result = model_float(input.float())
 
-        unkn_phys = data_tensor * std_unkn + mean_unkn
-        unkn_model = model_result * std_unkn + mean_unkn
-        unkn_float = float_result * std_unkn + mean_unkn
+            mean_unkn = mean_model[0, dict_channel[variable], 0, 0, 0]
+            std_unkn = std_model[0, dict_channel[variable], 0, 0, 0]
+
+            unkn_phys_ = data_tensor * std_unkn + mean_unkn
+            unkn_model_ = model_result * std_unkn + mean_unkn
+            unkn_float_ = float_result * std_unkn + mean_unkn
+
+            unkn_phys += unkn_phys_
+            unkn_model += unkn_model_
+            unkn_float += unkn_float_
+
+        unkn_phys = unkn_phys / number_months
+        unkn_model = unkn_model / number_months
+        unkn_float = unkn_float / number_months
 
         diff_float_model = unkn_model - unkn_float
         diff_float_model[unkn_phys[:, :, :-1, :, :] < 5] = 0
@@ -124,19 +140,19 @@ for variable in list(dict_channel.keys()):
         if not os.path.exists(path_mf):
             os.mkdir(path_mf)
 
-        path_fm_month = path_fm + "/2015." + month + "/"
+        path_fm_month = path_fm + "/winter/"
         if not os.path.exists(path_fm_month):
             os.mkdir(path_fm_month)
 
-        path_pf_month = path_pf + "/2015." + month + "/"
+        path_pf_month = path_pf + "/winter/"
         if not os.path.exists(path_pf_month):
             os.mkdir(path_pf_month)
 
-        path_mf_month = path_mf + "/2015." + month + "/"
+        path_mf_month = path_mf + "/" + season + "/"
         if not os.path.exists(path_mf_month):
             os.mkdir(path_mf_month)
 
-        for depth_index in range(0, d):  # iteration among depth
+        for depth_index in range(0, 1):  # d # iteration among depth
 
             if variable == "temperature":
                 pf_min, pf_max = -3, 3
@@ -145,22 +161,26 @@ for variable in list(dict_channel.keys()):
             lat_range = range(0, 75, 5)
             lon_range = range(0, 70, 5)
 
-            cmap = plt.get_cmap('PiYG')
+            if depth_index == 0:
+                cmap = plt.get_cmap('Greys')
 
-            plt.imshow(unkn_phys[0, dict_channel[variable], depth_index, :, :])
-            for y_line in lon_range:
-                plt.plot([0, 73], [y_line, y_line], lw=1, c="r")
-            for x_line in lat_range:
-                plt.plot([x_line, x_line], [0, 65], lw=1, c="r")
+                plt.imshow(unkn_phys[0, dict_channel[variable], depth_index, :, :], cmap=cmap)
+                for y_line in lon_range:
+                    plt.plot([0, 73], [y_line, y_line], lw=2, c="r")
+                for x_line in lat_range:
+                    plt.plot([x_line, x_line], [0, 65], lw=2, c="r")
 
-            plt.colorbar()
-            plt.suptitle("week: " + str(month) + " - depth index: " + str(depth_index))
-            plt.title("Discretization grid" + variable)
-            plt.savefig(path_fm_month + "/discretization_grid.png")
-            plt.savefig(path_pf_month + "/discretization_grid.png")
-            plt.savefig(path_mf_month + "/discretization_grid.png")
-            # plt.show()
-            plt.close()
+                plt.colorbar()
+                plt.suptitle("week: " + str(month) + " - depth index: " + str(depth_index))
+                plt.title("Discretization grid" + variable)
+                plt.savefig(path_fm_month + "/discretization_grid.png")
+                plt.savefig(path_pf_month + "/discretization_grid.png")
+                plt.savefig(path_mf_month + "/discretization_grid.png")
+                # plt.show()
+                plt.close()
+
+            lat_range = range(0, 65, 5)
+            lon_range = range(0, 75, 5)
 
             for from_index_lat in lat_range:
                 for from_index_lon in lon_range:

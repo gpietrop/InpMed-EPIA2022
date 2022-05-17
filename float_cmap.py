@@ -35,9 +35,9 @@ dict_season = {"winter": months[0:12],
 
 list_data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0].tolist()
 list_datetime = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 3].tolist()
-print(list_datetime[0][4:6])
 
 for season in dict_season.keys():
+    path_season = path_results + "/" + season
     for i in range(np.size(list_data)):  # indexing on list_data and list_datetime also
 
         path_current_float = float_path + "data/" + list_data[i]
@@ -103,6 +103,6 @@ for season in dict_season.keys():
         depth_index = 0
         plt.imshow(season_parallelepiped[season][0, 0, depth_index, :, :], cmap=cmap)
         plt.colorbar()
-        plt.savefig(path_results + season + "/float_distribution_" + str(depth_index) + ".png")
+        plt.savefig(path_season + "/float_distribution_" + str(depth_index) + ".png")
         # plt.show()
         plt.close()
