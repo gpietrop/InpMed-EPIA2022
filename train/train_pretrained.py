@@ -4,12 +4,12 @@ Script for training model that have been already pre-trained
 from torch.optim import Adadelta
 import matplotlib.pyplot as plt
 from IPython import display
-from completion import CompletionN
-from losses import completion_network_loss
-from mean_pixel_value import MV_pixel
-from utils import generate_input_mask
-from normalization import Normalization
-from plot_error import Plot_Error
+from architecture.completion import CompletionN
+from architecture.losses import completion_network_loss
+from utils.utils import MV_pixel
+from utils.utils import generate_input_mask
+from utils.utils import Normalization
+from plots.plot_error import Plot_Error
 from dataset.get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3

@@ -2,9 +2,8 @@
 Normalization function that must be applied before proceeding with the training
 bc the values of the unknown we want to estimate are way higher than 1
 """
-from hyperparameter import *
-from plot_tensor import *
-from mean_pixel_value import MV_pixel, std_pixel
+from plots.plot_tensor import *
+from utils.mean_pixel_value import MV_pixel, std_pixel
 
 
 def Normalization(list_tensor):

@@ -2,7 +2,7 @@ import torch
 import os
 import matplotlib.pyplot as plt
 
-from normalization import Normalization
+from utils.normalization import Normalization
 
 path = os.getcwd() + '/tensor/(12, 12, 20)/model2015/'
 tensor_ = os.listdir(path)

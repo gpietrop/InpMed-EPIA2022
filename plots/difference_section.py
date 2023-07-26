@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from dataset.get_dataset import get_list_model_tensor
-from completion import CompletionN
-from utils import generate_input_mask
-from normalization import Normalization
-from mean_pixel_value import MV_pixel
+from architecture.completion import CompletionN
+from utils.utils import generate_input_mask
+from utils.normalization import Normalization
+from utils.mean_pixel_value import MV_pixel
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
 sns.set(context='notebook', style='whitegrid')

@@ -6,7 +6,7 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 import os
-from plot_tensor import plot_routine, save_routine
+from plots.plot_tensor import plot_routine, save_routine
 from hyperparameter import *
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km

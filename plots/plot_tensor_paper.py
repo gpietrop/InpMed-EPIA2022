@@ -1,15 +1,13 @@
-import numpy as np
-
 import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from matplotlib import pyplot, transforms
 
-from completion import CompletionN
-from mean_pixel_value import MV_pixel
-from utils import generate_input_mask
-from normalization import Normalization
+from architecture.completion import CompletionN
+from utils.utils import MV_pixel
+from utils.utils import generate_input_mask
+from utils.utils import Normalization
 from dataset.get_dataset import *
 
 sns.set(context='notebook', style='white')

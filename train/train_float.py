@@ -5,14 +5,13 @@ using a weight matrix to perform training only where floating information are av
 from matplotlib import pyplot as plt
 from torch.optim import Adadelta
 from IPython import display
-from normalization import Normalization, Normalization_Float
-from completion import CompletionN
-from utils import *
+from utils.utils import Normalization, Normalization_Float
+from architecture.completion import CompletionN
 from dataset.get_dataset import *
-from losses import completion_float_loss
-from mean_pixel_value import *
-from plot_error import Plot_Error
-from float_mask import *
+from architecture.losses import completion_float_loss
+from utils.utils import *
+from plots.plot_error import Plot_Error
+from utils.float_mask import *
 
 # first of all we get the model trained with model's data
 path_model = 'model/model2015/'
