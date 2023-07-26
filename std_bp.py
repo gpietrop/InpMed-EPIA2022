@@ -1,19 +1,16 @@
 import os
-import random
 import torch
 
 import matplotlib
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from get_dataset import get_list_model_tensor
+from dataset.get_dataset import get_list_model_tensor
 from completion import CompletionN
 from utils import generate_input_mask
 from normalization import Normalization
 from mean_pixel_value import MV_pixel
-from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution, number_channel
 
 sns.set(context='notebook', style='whitegrid')

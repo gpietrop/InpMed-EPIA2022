@@ -9,7 +9,7 @@ from float_mask import *
 from normalization import Normalization, Normalization_Sat
 from completion import CompletionN
 from utils import *
-from get_dataset import *
+from dataset.get_dataset import *
 from losses import completion_sat_loss
 from mean_pixel_value import *
 from plot_error import Plot_Error

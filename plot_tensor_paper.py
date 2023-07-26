@@ -1,7 +1,3 @@
-from IPython import display
-
-import torch.nn as nn
-from torch.optim import Adadelta
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -10,15 +6,11 @@ import seaborn as sns
 from matplotlib.colors import ListedColormap
 from matplotlib import pyplot, transforms
 
-
-from discriminator import Discriminator
 from completion import CompletionN
-from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
-from utils import generate_input_mask, generate_hole_area, crop
+from utils import generate_input_mask
 from normalization import Normalization
-from plot_error import Plot_Error
-from get_dataset import *
+from dataset.get_dataset import *
 
 sns.set(context='notebook', style='white')
 matplotlib.rc('font', **{'size': 3, 'weight': 'bold'})

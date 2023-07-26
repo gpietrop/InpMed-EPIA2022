@@ -7,7 +7,7 @@ import os
 import matplotlib.pyplot as plt
 
 from hyperparameter import *
-from make_datasets import find_index, to_depth, read_date_time_sat
+from dataset.make_datasets import find_index, to_depth, read_date_time_sat
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
 constant_longitude = 111  # 1° of latitude corresponds to 111 km

@@ -10,7 +10,7 @@ from mean_pixel_value import MV_pixel
 from utils import generate_input_mask
 from normalization import Normalization
 from plot_error import Plot_Error
-from get_dataset import *
+from dataset.get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3
 model_name = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
